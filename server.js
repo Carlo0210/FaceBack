@@ -13,11 +13,9 @@ const multer = require('multer');
 const fs = require('fs-extra');
 const path = require('path');
 const { Canvas, Image, ImageData } = require('canvas');
-const canvas = require("canvas");
 const faceapi = require('face-api.js');
 const { createCanvas, loadImage } = require('canvas');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 
 require('dotenv').config();
 app.use(express.urlencoded({extended: true}));
