@@ -33,7 +33,7 @@ app.use(bodyParser.json());
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'https://darling-phoenix-34239a.netlify.app',
     methods: ['GET', 'POST', 'DELETE', 'PUT']
   }
 })
