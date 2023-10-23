@@ -439,6 +439,6 @@ app.get('/AttendeeInformation', (req, res) => {
 
 
 
-server.listen(process.env.PORT, ()=> {
+server.listen(process.env.PORT || 6010, ()=> {
   console.log('listening to port Atlas mongodb')
 })
