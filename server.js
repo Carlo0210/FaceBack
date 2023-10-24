@@ -61,7 +61,7 @@ const storage = multer.diskStorage({
   },
 });
 // Set up multer for file uploads
-const upload = multer({storage: storage});
+const upload = multer({storage});
 
 
 // Function to calculate the Euclidean distance between two face descriptors
