@@ -54,7 +54,7 @@ loadModels();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads'); // You should create this folder to store uploaded images
+    cb(null, '/uploads'); // You should create this folder to store uploaded images
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
