@@ -54,14 +54,14 @@ loadModels();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads'); // You should create this folder to store uploaded images
+    cb(null, 'uploads/'); // You should create this folder to store uploaded images
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
   },
 });
 // Set up multer for file uploads
-const upload = multer({storage});
+const upload = multer({storage: storage});
 
 
 // Function to calculate the Euclidean distance between two face descriptors
