@@ -80,7 +80,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
     const canvas = createCanvas(image.width, image.height);
@@ -95,59 +94,40 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
-    // Check if a similar face already exists in the database
-    const existingFaces = await Face.find(); // Assuming you have a Face model defined
+    const existingFaces = await Face.find();
 
-    let isDuplicateFaceDescription = false;
-    let isDuplicateEmail = false;
-
-    for (const newFaceDescription of fullFaceDescriptions) {
+    const isDuplicateFaceDescription = fullFaceDescriptions.some(newFaceDescription => {
       const newFaceDescriptor = newFaceDescription.descriptor;
 
-      for (const existingFace of existingFaces) {
-        // Check if the eventId and email match before comparing faces
+      return existingFaces.some(existingFace => {
         if (existingFace.eventId === eventId) {
-          // Check for duplicate face descriptions
-          const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
+          const existingFaceDescriptors = new Set(existingFace.faceDescription.map(faceData => faceData.faceDescriptor));
 
-          for (const existingFaceDescriptor of existingFaceDescriptors) {
+          return Array.from(existingFaceDescriptors).some(existingFaceDescriptor => {
             const distance = euclideanDistance(newFaceDescriptor, existingFaceDescriptor);
-
-            // You can set a threshold for similarity, e.g., 0.6 (adjust as needed)
-            if (distance < 0.6) {
-              isDuplicateFaceDescription = true;
-              break;
-            }
-          }
-
-          if (isDuplicateFaceDescription) {
-            break;
-          }
+            return distance < 0.6;
+          });
         }
 
-        // Check for duplicate email
-        if (existingFace.email === email) {
-          isDuplicateEmail = true;
-          break;
-        }
-      }
+        return false;
+      });
+    });
 
-      if (isDuplicateFaceDescription) {
-        return res.status(400).json({ message: 'This face is already registered on this event.' });
-      }
-      if (isDuplicateEmail) {
-        return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
-      }
+    if (isDuplicateFaceDescription) {
+      return res.status(400).json({ message: 'This face is already registered on this event.' });
     }
-    // Save data to MongoDB, including faceDescriptions and distances
-    const facesData = fullFaceDescriptions.map((faceDescription) => {
+
+    if (existingFaces.some(existingFace => existingFace.email === email)) {
+      return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
+    }
+
+    const facesData = await Promise.all(fullFaceDescriptions.map(async faceDescription => {
       const { x, y, width, height } = faceDescription.detection.box;
       const faceBox = { x, y, width, height };
       const faceDescriptor = faceDescription.descriptor;
       const faceLandmarks = faceDescription.landmarks;
 
-      // Calculate the distances between this face and all other faces
-      const distances = fullFaceDescriptions.map((otherFaceDescription) => {
+      const distances = fullFaceDescriptions.map(otherFaceDescription => {
         const distance = euclideanDistance(faceDescriptor, otherFaceDescription.descriptor);
         return distance;
       });
@@ -158,14 +138,11 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
         faceLandmarks,
         distances,
       };
-    });
-
-
+    }));
 
     const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
     await newFace.save();
 
-    // Remove the uploaded image
     await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
@@ -176,13 +153,13 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
 });
 
 
+
 app.post('/compare-faces', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
     const canvas = createCanvas(image.width, image.height);
@@ -197,49 +174,37 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
-    // Calculate distances between detected faces
     const detectedFaceDescriptors = fullFaceDescriptions.map(faceDescription => faceDescription.descriptor);
 
-    // Retrieve faces from MongoDB
-    const eventId = req.body.eventId; // Add an eventId parameter to the request
-    const savedFaces = await Face.find({ eventId: eventId}); // Retrieve all faces from MongoDB
+    const eventId = req.body.eventId;
+    const savedFaces = await Face.find({ eventId });
 
     if (savedFaces.length === 0) {
       return res.status(400).json({ message: 'No faces found in the database' });
     }
 
-    // Define a threshold for similarity
-    const similarityThreshold = 0.6; // Adjust this value as needed
+    const similarityThreshold = 0.6;
 
-    // Calculate distances and filter based on similarity
     const results = savedFaces.map(savedFace => {
       const savedFaceDescriptors = savedFace.faceDescription.map(faceData => faceData.faceDescriptor);
-      const distances = savedFaceDescriptors.map(descriptor => {
-        return euclideanDistance(detectedFaceDescriptors[0], descriptor);
-      });
-
-      // Choose the minimum distance as the similarity score
+      const distances = savedFaceDescriptors.map(descriptor => euclideanDistance(detectedFaceDescriptors[0], descriptor));
       const similarity = Math.min(...distances);
 
-      // If the similarity is above the threshold, include it in the results
-      if (similarity <= similarityThreshold) {
-        return {
-          eventId: savedFace.eventId,
-          name: savedFace.name,
-          school: savedFace.school,
-          email: savedFace.email,
-          similarity,
-        };
-      }
-      // Otherwise, return null to exclude it from the results
-      return null;
+      return similarity <= similarityThreshold
+        ? {
+            eventId: savedFace.eventId,
+            name: savedFace.name,
+            school: savedFace.school,
+            email: savedFace.email,
+            similarity,
+          }
+        : null;
     });
 
-    // Remove null entries (entries that didn't meet the similarity threshold)
     const filteredResults = results.filter(result => result !== null);
 
     if (filteredResults.length === 0) {
-      return res.status(400).json({ message: 'This face is not register on the specific event.' });
+      return res.status(400).json({ message: 'This face is not registered for the specific event.' });
     }
 
     res.status(200).json({ message: 'This face is completely verified.', results: filteredResults });
@@ -248,6 +213,7 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 
 
