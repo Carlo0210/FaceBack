@@ -54,52 +54,6 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
-    // Check if a similar face already exists in the database
-    const existingFaces = await Face.find();
-// Assuming you have a Face model defined
-
-    let isDuplicateFaceDescription = false;
-    let isDuplicateEmail = false;
-
-    for (const newFaceDescription of fullFaceDescriptions) {
-      const newFaceDescriptor = newFaceDescription.descriptor;
-
-      for (const existingFace of existingFaces) {
-        // Check if the eventId and email match before comparing faces
-        if (existingFace.eventId === eventId) {
-          // Check for duplicate face descriptions
-          const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
-
-          for (const existingFaceDescriptor of existingFaceDescriptors) {
-            const distance = euclideanDistance(newFaceDescriptor, existingFaceDescriptor);
-
-            // You can set a threshold for similarity, e.g., 0.6 (adjust as needed)
-            if (distance < 0.6) {
-              isDuplicateFaceDescription = true;
-              break;
-            }
-          }
-
-          if (isDuplicateFaceDescription) {
-            break;
-          }
-        }
-
-        // Check for duplicate email
-        if (existingFace.email === email) {
-          isDuplicateEmail = true;
-          break;
-        }
-      }
-
-      if (isDuplicateFaceDescription) {
-        return res.status(400).json({ message: 'This face is already registered on this event.' });
-      }
-      if (isDuplicateEmail) {
-        return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
-      }
-    }
-
     // Save data to MongoDB, including faceDescriptions and image
     const facesData = fullFaceDescriptions.map((faceDescription) => {
       const { x, y, width, height } = faceDescription.detection.box;
