@@ -64,7 +64,7 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
   return Math.sqrt(squaredDistance);
 }
 
-router.post('/post-face', upload.single('image'), async (req, res) => {
+app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
     const { eventId, name, school, email } = req.body;
 
