@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
-const FaceModel = require('./models/faceModel'); // Assuming faceModel.js is in the same directory
+const FaceModel = require('../models/faceModel'); // Assuming faceModel.js is in the same directory
 const { InsightFace } = require('insightface'); // Replace with the actual library you are using
 
 // Set up multer for handling file uploads
