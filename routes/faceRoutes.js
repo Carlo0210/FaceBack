@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Face = require('./models/faceModel'); // Assuming faceModel.js is in the same directory
+const Face = require('../models/faceModel'); // Assuming faceModel.js is in the same directory
 const multer = require('multer');
 const fs = require('fs-extra');
 const path = require('path');
