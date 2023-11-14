@@ -15,13 +15,17 @@ const faceLandmarkNet = faceapi.nets.faceLandmark68Net;
 const faceRecognitionNet = faceapi.nets.faceRecognitionNet;
 
 const loadModels = async () => {
-  const MODEL_PATH = './models'
-  await faceDetectionNet.loadFromDisk(MODEL_PATH);
-  await tinyFaceDetector.loadFromDisk(MODEL_PATH);
-  await faceLandmarkNet.loadFromDisk(MODEL_PATH);
-  await faceRecognitionNet.loadFromDisk(MODEL_PATH);
+  const MODEL_PATH = './models';
+  try {
+    await faceDetectionNet.loadFromDisk(MODEL_PATH);
+    await tinyFaceDetector.loadFromDisk(MODEL_PATH);
+    await faceLandmarkNet.loadFromDisk(MODEL_PATH);
+    await faceRecognitionNet.loadFromDisk(MODEL_PATH);
+  } catch (error) {
+    console.error('Error loading models:', error);
+  }
 };
-loadModels();
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -141,7 +145,7 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
 
     res.status(201).json({ message: 'Face added successfully' });
   } catch (error) {
-    console.error(error);
+    console.error('Error in /post-face route:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
