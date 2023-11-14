@@ -1,100 +1,56 @@
-// routes/faceRoutes.js
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
-const Face = require('../models/faceModel');
-const faceapi = require('face-api.js');
-const canvas = require('canvas');
+const FaceModel = require('./models/faceModel'); // Assuming faceModel.js is in the same directory
+const { InsightFace } = require('insightface'); // Replace with the actual library you are using
 
-// Set up face-api.js
-faceapi.env.monkeyPatch({ canvas });
-const { Canvas, Image, ImageData } = canvas;
-faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
+// Set up multer for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
-// Load face-api.js models
-async function loadModels() {
-  await faceapi.nets.faceLandmark68Net.loadFromDisk('./models');
-  await faceapi.nets.faceRecognitionNet.loadFromDisk('./models');
-  // Load other models as needed
-}
-loadModels();
+// Initialize InsightFace
+const insightFace = new InsightFace();
 
-// Create a new face
-router.post('/', async (req, res) => {
+// Route to add a new face with an image
+router.post('/post-face', upload.single('image'), async (req, res) => {
   try {
-    const { Id, name, school, email, picture } = req.body;
+    // Extract necessary information from the request
+    const { eventId, name, school, email } = req.body;
+    const imageBuffer = req.file.buffer;
 
-    // Process the image to detect face landmarks
-    const img = await canvas.loadImage(picture);
-    const detections = await faceapi.detectAllFaces(img).withFaceLandmarks();
+    // Perform face recognition and extract face description
+    const faceDescription = await insightFace.recognize(imageBuffer);
 
-    if (detections.length === 0) {
-      return res.status(400).json({ error: 'No face detected in the picture.' });
-    }
+    // Save face data to the database
+    const newFace = new FaceModel({
+      eventId,
+      name,
+      school,
+      email,
+      faceDescription: {
+        image: imageBuffer.toString('base64'), // Convert image buffer to base64 for storage
+        description: faceDescription,
+      },
+    });
 
-    // Save the detected landmarks with the face data
-    const newFace = new Face({ Id, name, school, email, picture, landmarks: detections });
-    await newFace.save();
-
-    res.status(201).json(newFace);
+    const savedFace = await newFace.save();
+    res.json(savedFace);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to create a new face.' });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Get a list of all faces
-router.get('/', async (req, res) => {
+// Route to get faces for a specific event
+router.get('/getFaces/:eventId', async (req, res) => {
   try {
-    const faces = await Face.find();
-    res.status(200).json(faces);
+    const eventId = req.params.eventId;
+    const faces = await FaceModel.find({ eventId });
+    res.json(faces);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch faces.' });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Get a single face by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const face = await Face.findById(req.params.id);
-    if (!face) {
-      return res.status(404).json({ error: 'Face not found.' });
-    }
-    res.status(200).json(face);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to fetch face.' });
-  }
-});
-
-// Update a face by ID
-router.put('/:id', async (req, res) => {
-  try {
-    const { name, school, email, picture } = req.body;
-    const updatedFace = { name, school, email, picture };
-    const face = await Face.findByIdAndUpdate(req.params.id, updatedFace, { new: true });
-    if (!face) {
-      return res.status(404).json({ error: 'Face not found.' });
-    }
-    res.status(200).json(face);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to update face.' });
-  }
-});
-
-// Delete a face by ID
-router.delete('/:id', async (req, res) => {
-  try {
-    const face = await Face.findByIdAndDelete(req.params.id);
-    if (!face) {
-      return res.status(404).json({ error: 'Face not found.' });
-    }
-    res.status(200).json({ message: 'Face deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to delete face.' });
-  }
-});
+// Add more routes as needed
 
 module.exports = router;
