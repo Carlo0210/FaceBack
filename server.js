@@ -51,17 +51,9 @@ const loadModels = async () => {
   await faceRecognitionNet.loadFromDisk(MODEL_PATH);
 };
 loadModels();
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images/'); // You should create this folder to store uploaded images
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
-// Set up multer for file uploads
-const upload = multer({storage: storage});
+const storage = multer.memoryStorage(); // Use memory storage to store the image as binary data
+const upload = multer({ storage: storage });
+
 
 
 // Function to calculate the Euclidean distance between two face descriptors
