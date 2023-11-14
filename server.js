@@ -12,7 +12,6 @@ const Person = require('./models/Person');
 const Face   = require('./models/faceModel');
 const bodyParser = require('body-parser');
 
-
 require('dotenv').config();
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
@@ -32,6 +31,10 @@ const io = require('socket.io')(server, {
     methods: ['GET', 'POST', 'DELETE', 'PUT']
   }
 })
+
+
+
+
 
 
 async function getLastMessagesFromRoom(room){
