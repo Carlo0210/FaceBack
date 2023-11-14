@@ -26,13 +26,10 @@ const loadModels = async () => {
   }
 };
 
-// ... (other imports and configurations)
-
-// Configure multer for file uploads
-const storage = multer.memoryStorage(); // Use memory storage instead of disk storage
-
-// Set up multer for file uploads
+const storage = multer.memoryStorage(); // Use memory storage to store the image as binary data
 const upload = multer({ storage: storage });
+
+// ... (other route handlers)
 
 router.post('/post-face', upload.single('image'), async (req, res) => {
   try {
@@ -42,12 +39,9 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Convert the image buffer to base64
     const imageBuffer = req.file.buffer;
-    const base64Image = imageBuffer.toString('base64');
 
-    // Load the image from the buffer
-    const image = await loadImage(Buffer.from(base64Image, 'base64'));
+    const image = await loadImage(imageBuffer);
     const canvas = createCanvas(image.width, image.height);
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
@@ -61,7 +55,8 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
     // Check if a similar face already exists in the database
-    const existingFaces = await Face.find(); // Assuming you have a Face model defined
+    const existingFaces = await Face.find();
+// Assuming you have a Face model defined
 
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
