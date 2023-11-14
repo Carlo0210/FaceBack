@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "concurrently \"npm run start-node\" \"npm run start-python\"",
+    "start-node": "node server.js",
+    "start-python": "python app.py"
   },
   "keywords": [],
   "author": "",
