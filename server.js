@@ -10,7 +10,6 @@ const Event = require('./models/Event');
 const Person = require('./models/Person');
 const Face   = require('./models/faceModel');
 const multer = require('multer');
-const { promisify } = require('util');
 const fs = require('fs-extra');
 const path = require('path');
 const { Canvas, Image, ImageData } = require('canvas');
@@ -73,8 +72,6 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
   return Math.sqrt(squaredDistance);
 }
 
-const unlinkAsync = promisify(fs.unlink);
-
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
     const { eventId, name, school, email } = req.body;
@@ -83,6 +80,7 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
+    // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
     const canvas = createCanvas(image.width, image.height);
@@ -97,44 +95,58 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
-    const existingFaces = await Face.find({ eventId });
+    // Check if a similar face already exists in the database
+    const existingFaces = await Face.find(); // Assuming you have a Face model defined
 
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
 
-    await Promise.all(existingFaces.map(async (existingFace) => {
-      if (existingFace.email === email) {
-        isDuplicateEmail = true;
-      }
+    for (const newFaceDescription of fullFaceDescriptions) {
+      const newFaceDescriptor = newFaceDescription.descriptor;
 
-      if (existingFace.eventId === eventId) {
-        const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
+      for (const existingFace of existingFaces) {
+        // Check if the eventId and email match before comparing faces
+        if (existingFace.eventId === eventId) {
+          // Check for duplicate face descriptions
+          const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
 
-        isDuplicateFaceDescription = existingFaceDescriptors.some((existingFaceDescriptor) => {
-          const distance = euclideanDistance(fullFaceDescriptions[0].descriptor, existingFaceDescriptor);
-          return distance < 0.6;
-        });
+          for (const existingFaceDescriptor of existingFaceDescriptors) {
+            const distance = euclideanDistance(newFaceDescriptor, existingFaceDescriptor);
 
-        if (isDuplicateFaceDescription) {
-          return;
+            // You can set a threshold for similarity, e.g., 0.6 (adjust as needed)
+            if (distance < 0.6) {
+              isDuplicateFaceDescription = true;
+              break;
+            }
+          }
+
+          if (isDuplicateFaceDescription) {
+            break;
+          }
+        }
+
+        // Check for duplicate email
+        if (existingFace.email === email) {
+          isDuplicateEmail = true;
+          break;
         }
       }
-    }));
 
-    if (isDuplicateFaceDescription) {
-      return res.status(400).json({ message: 'This face is already registered on this event.' });
+      if (isDuplicateFaceDescription) {
+        return res.status(400).json({ message: 'This face is already registered on this event.' });
+      }
+      if (isDuplicateEmail) {
+        return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
+      }
     }
-
-    if (isDuplicateEmail) {
-      return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
-    }
-
+    // Save data to MongoDB, including faceDescriptions and distances
     const facesData = fullFaceDescriptions.map((faceDescription) => {
       const { x, y, width, height } = faceDescription.detection.box;
       const faceBox = { x, y, width, height };
       const faceDescriptor = faceDescription.descriptor;
       const faceLandmarks = faceDescription.landmarks;
 
+      // Calculate the distances between this face and all other faces
       const distances = fullFaceDescriptions.map((otherFaceDescription) => {
         const distance = euclideanDistance(faceDescriptor, otherFaceDescription.descriptor);
         return distance;
@@ -148,9 +160,12 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       };
     });
 
+
+
     const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
     await newFace.save();
 
+    // Remove the uploaded image
     await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
@@ -159,7 +174,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 
 app.post('/compare-faces', upload.single('image'), async (req, res) => {
