@@ -101,44 +101,52 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
 
-    for (const newFaceDescription of fullFaceDescriptions) {
-      const newFaceDescriptor = newFaceDescription.descriptor;
+// ...
 
-      for (const existingFace of existingFaces) {
-        // Check if the eventId and email match before comparing faces
-        if (existingFace.eventId === eventId) {
-          // Check for duplicate face descriptions
-          const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
+for (const newFaceDescription of fullFaceDescriptions) {
+  let isDuplicateFaceDescription = false; // Reset for each new face description
+  let isDuplicateEmail = false; // Reset for each new face description
 
-          for (const existingFaceDescriptor of existingFaceDescriptors) {
-            const distance = euclideanDistance(newFaceDescriptor, existingFaceDescriptor);
+  const newFaceDescriptor = newFaceDescription.descriptor;
 
-            // You can set a threshold for similarity, e.g., 0.6 (adjust as needed)
-            if (distance < 0.6) {
-              isDuplicateFaceDescription = true;
-              break;
-            }
-          }
+  for (const existingFace of existingFaces) {
+    // Check if the eventId and email match before comparing faces
+    if (existingFace.eventId === eventId) {
+      // Check for duplicate face descriptions
+      const existingFaceDescriptors = existingFace.faceDescription.map((faceData) => faceData.faceDescriptor);
 
-          if (isDuplicateFaceDescription) {
-            break;
-          }
-        }
+      for (const existingFaceDescriptor of existingFaceDescriptors) {
+        const distance = euclideanDistance(newFaceDescriptor, existingFaceDescriptor);
 
-        // Check for duplicate email
-        if (existingFace.email === email) {
-          isDuplicateEmail = true;
+        // You can set a threshold for similarity, e.g., 0.6 (adjust as needed)
+        if (distance < 0.6) {
+          isDuplicateFaceDescription = true;
           break;
         }
       }
 
       if (isDuplicateFaceDescription) {
-        return res.status(400).json({ message: 'This face is already registered on this event.' });
-      }
-      if (isDuplicateEmail) {
-        return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
+        break;
       }
     }
+
+    // Check for duplicate email
+    if (existingFace.email === email) {
+      isDuplicateEmail = true;
+      break;
+    }
+  }
+
+  if (isDuplicateFaceDescription) {
+    return res.status(400).json({ message: 'This face is already registered on this event.' });
+  }
+  if (isDuplicateEmail) {
+    return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
+  }
+}
+
+// ...
+
     // Save data to MongoDB, including faceDescriptions and distances
     const facesData = fullFaceDescriptions.map((faceDescription) => {
       const { x, y, width, height } = faceDescription.detection.box;
