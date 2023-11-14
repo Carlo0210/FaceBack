@@ -10,13 +10,13 @@ const Event = require('./models/Event');
 const Person = require('./models/Person');
 const Face   = require('./models/faceModel');
 const multer = require('multer');
+const { promisify } = require('util');
 const fs = require('fs-extra');
 const path = require('path');
 const { Canvas, Image, ImageData } = require('canvas');
 const faceapi = require('face-api.js');
 const { createCanvas, loadImage } = require('canvas');
 const bodyParser = require('body-parser');
-const unlinkAsync = promisify(fs.unlink);
 
 require('dotenv').config();
 app.use(express.urlencoded({extended: true}));
@@ -72,6 +72,8 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
     .reduce((sum, val) => sum + val, 0);
   return Math.sqrt(squaredDistance);
 }
+
+const unlinkAsync = promisify(fs.unlink);
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
