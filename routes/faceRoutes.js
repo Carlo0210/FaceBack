@@ -26,26 +26,13 @@ const loadModels = async () => {
   }
 };
 
+// ... (other imports and configurations)
+
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, '/models'); // You should create this folder to store uploaded images
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
+const storage = multer.memoryStorage(); // Use memory storage instead of disk storage
+
 // Set up multer for file uploads
-const upload = multer({storage: storage});
-
-
-// Function to calculate the Euclidean distance between two face descriptors
-function euclideanDistance(faceDescriptor1, faceDescriptor2) {
-  const squaredDistance = faceDescriptor1
-    .map((val, i) => (val - faceDescriptor2[i]) ** 2)
-    .reduce((sum, val) => sum + val, 0);
-  return Math.sqrt(squaredDistance);
-}
+const upload = multer({ storage: storage });
 
 router.post('/post-face', upload.single('image'), async (req, res) => {
   try {
@@ -55,9 +42,12 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Load the image from the file path
-    const imagePath = path.join(__dirname, req.file.path);
-    const image = await loadImage(imagePath);
+    // Convert the image buffer to base64
+    const imageBuffer = req.file.buffer;
+    const base64Image = imageBuffer.toString('base64');
+
+    // Load the image from the buffer
+    const image = await loadImage(Buffer.from(base64Image, 'base64'));
     const canvas = createCanvas(image.width, image.height);
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
@@ -114,7 +104,8 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
         return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
       }
     }
-    // Save data to MongoDB, including faceDescriptions and distances
+
+    // Save data to MongoDB, including faceDescriptions and image
     const facesData = fullFaceDescriptions.map((faceDescription) => {
       const { x, y, width, height } = faceDescription.detection.box;
       const faceBox = { x, y, width, height };
@@ -135,13 +126,8 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
       };
     });
 
-
-
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: base64Image });
     await newFace.save();
-
-    // Remove the uploaded image
-    await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
   } catch (error) {
@@ -149,6 +135,7 @@ router.post('/post-face', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
 
 
 router.post('/compare-faces', upload.single('image'), async (req, res) => {
