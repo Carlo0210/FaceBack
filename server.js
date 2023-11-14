@@ -52,8 +52,16 @@ const loadModels = async () => {
 };
 loadModels();
 // Configure multer for file uploads
-const storage = multer.memoryStorage(); // Use memory storage to store the image as binary data
-const upload = multer({ storage: storage });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images/'); // You should create this folder to store uploaded images
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+// Set up multer for file uploads
+const upload = multer({storage: storage});
 
 
 // Function to calculate the Euclidean distance between two face descriptors
@@ -72,9 +80,9 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    const imageBuffer = req.file.buffer;
-
-    const image = await loadImage(imageBuffer);
+    // Load the image from the file path
+    const imagePath = path.join(__dirname, req.file.path);
+    const image = await loadImage(imagePath);
     const canvas = createCanvas(image.width, image.height);
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
@@ -87,14 +95,18 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
-    // Check if a similar face already exists in the database
-    const existingFaces = await Face.find();
-
-    // ... (other duplicate checking logic)
-
-    // Save data to MongoDB, including faceDescriptions, distances, and image data
+    // Save data to MongoDB, including faceDescriptions and distances
     const facesData = fullFaceDescriptions.map((faceDescription) => {
-      // ... (existing face data)
+      const { x, y, width, height } = faceDescription.detection.box;
+      const faceBox = { x, y, width, height };
+      const faceDescriptor = faceDescription.descriptor;
+      const faceLandmarks = faceDescription.landmarks;
+
+      // Calculate the distances between this face and all other faces
+      const distances = fullFaceDescriptions.map((otherFaceDescription) => {
+        const distance = euclideanDistance(faceDescriptor, otherFaceDescription.descriptor);
+        return distance;
+      });
 
       return {
         faceBox,
@@ -104,12 +116,17 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       };
     });
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: imageBuffer });
+
+
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
     await newFace.save();
+
+    // Remove the uploaded image
+    await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
   } catch (error) {
-    console.error('Error in /post-face route:', error);
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
