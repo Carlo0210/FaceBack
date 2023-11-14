@@ -46,7 +46,12 @@ const storage = multer.diskStorage({
 });
 // Set up multer for file uploads
 const upload = multer({storage: storage});
+// Load BlazeFace model
+let blazeFaceModel;
 
+(async () => {
+  blazeFaceModel = await BlazeFace.load();
+})();
 // Middleware to detect faces
 const detectFaces = async (req, res, next) => {
   try {
@@ -71,7 +76,7 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 }
 
 // Route to add face data
-router.post('/post-face', upload.single('image'), detectFaces, async (req, res) => {
+app.post('/post-face', upload.single('image'), detectFaces, async (req, res) => {
   try {
     const { eventId, name, school, email } = req.body; // Assuming other form data is sent in the request body
 
