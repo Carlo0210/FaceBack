@@ -1,22 +1,30 @@
-// faceModel.js
 const mongoose = require('mongoose');
-
+const { isEmail } = require('validator');
 const faceSchema = new mongoose.Schema({
-  eventId: String,
-  name: String,
-  school: String,
-  email: String,
-  faceDescription: [
-    {
-      faceBox: { x: Number, y: Number, width: Number, height: Number },
-      faceDescriptor: [Number],
-      faceLandmarks: Object,
-      distances: [Number],
-    },
-  ],
-  image: { type: Buffer, required: true },
+  eventId: {
+    type: String,
+    required: [true, "Can't be blank"],
+  },
+  name: {
+    type: String,
+    required: [true, "Can't be blank"],
+  },
+  school: {
+    type: String,
+    required: [true, "Can't be blank"],
+  },
+  email: {
+    type: String,
+    lowercase: true,
+    unique: true,
+    required: [true, "Can't be blank"],
+    index: true,
+    validate: [isEmail, 'Invalid email'],
+  },
+  faceDescription: Object,
 });
 
-const Face = mongoose.model('Face', faceSchema);
+const FaceDescription = mongoose.model("Face", faceSchema);
 
-module.exports = Face;
+
+module.exports = FaceDescription;
