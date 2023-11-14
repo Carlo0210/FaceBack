@@ -8,6 +8,7 @@ const rooms = ['SportFest', 'Study Group', 'Business Mindset', 'Famyly Group'];
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const Event = require('./models/Event');
+const multer = require('multer');
 const Person = require('./models/Person');
 const Face   = require('./models/faceModel');
 const bodyParser = require('body-parser');
