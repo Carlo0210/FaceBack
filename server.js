@@ -376,7 +376,7 @@ app.delete('/users/:id', async (req, res) => {
 
 
 app.post('/events', async (req, res) => {
-  const { title, date, collegeFacility, description, createdBy, createdId } = req.body;a
+  const { title, date, collegeFacility, description, createdBy, createdId } = req.body;
 
   if (!title || !date || !collegeFacility || !description || !createdBy || !createdId) {
     return res.status(400).json({ error: 'Please provide all required fields.' });
