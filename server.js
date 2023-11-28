@@ -376,14 +376,14 @@ app.delete('/users/:id', async (req, res) => {
 
 
 app.post('/events', async (req, res) => {
-  const { title, date, description, createdBy, createdId } = req.body;
+  const { title, date, collegeFacility, description, createdBy, createdId } = req.body;a
 
-  if (!title || !date || !description || !createdBy || !createdId) {
+  if (!title || !date || !collegeFacility || !description || !createdBy || !createdId) {
     return res.status(400).json({ error: 'Please provide all required fields.' });
   }
 
   try {
-    const newEvent = new Event({ title, date, description, createdBy, createdId });
+    const newEvent = new Event({ title, date, collegeFacility, description, createdBy, createdId });
     await newEvent.save();
     return res.status(201).json({ message: 'Event created successfully.' });
   } catch (error) {
