@@ -402,6 +402,33 @@ app.get('/events', async (req, res) => {
   }
 });
 
+// Edit endpoint
+app.put('/events/:id', async (req, res) => {
+  const eventId = req.params.id;
+  console.log('Received PUT request for event ID:', eventId);
+  const { title, date, collegeFacility, description, createdBy, createdId } = req.body;
+
+  if (!title || !date || !collegeFacility || !description || !createdBy || !createdId) {
+    return res.status(400).json({ error: 'Please provide all required fields.' });
+  }
+
+  try {
+    const updatedEvent = await Event.findByIdAndUpdate(
+      eventId,
+      { title, date, collegeFacility, description, createdBy, createdId },
+      { new: true } // Return the modified document
+    );
+
+    if (!updatedEvent) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+
+    return res.status(200).json({ message: 'Event updated successfully.', event: updatedEvent });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Failed to update event.' });
+  }
+});
 
 
 app.post('/register/attendee', async (req, res) => {
