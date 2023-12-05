@@ -81,9 +81,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     }
 
     // Load the image from the file path
-    const imageBuffer = fs.readFileSync(req.file.path);
-
-    // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
     const canvas = createCanvas(image.width, image.height);
@@ -104,7 +101,7 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
 
-
+// ...
 
 for (const newFaceDescription of fullFaceDescriptions) {
   let isDuplicateFaceDescription = false; // Reset for each new face description
@@ -147,6 +144,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
     return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
   }
 }
+z
     // Save data to MongoDB, including faceDescriptions and distances
     const facesData = fullFaceDescriptions.map((faceDescription) => {
       const { x, y, width, height } = faceDescription.detection.box;
@@ -170,15 +168,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new FaceDescription({
-      eventId,
-      name,
-      school,
-      email,
-      image: imageBuffer,
-      faceDescription: facesData,
-    });
-
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
     await newFace.save();
 
     // Remove the uploaded image
