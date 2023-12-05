@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { isEmail } = require('validator');
+
 const faceSchema = new mongoose.Schema({
   eventId: {
     type: String,
@@ -20,6 +21,10 @@ const faceSchema = new mongoose.Schema({
     required: [true, "Can't be blank"],
     index: true,
     validate: [isEmail, 'Invalid email'],
+  },
+  image: {
+    type: Buffer, // Store the image data as a buffer
+    required: true,
   },
   faceDescription: Object,
 });
