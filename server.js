@@ -87,21 +87,25 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
 
-    let fullFaceDescriptions = await faceapi.detectAllFaces(canvas).withFaceLandmarks().withFaceDescriptors();
+    let fullFaceDescriptions = await faceapi
+      .detectAllFaces(canvas)
+      .withFaceLandmarks()
+      .withFaceDescriptors();
 
     if (fullFaceDescriptions.length === 0) {
       return res.status(400).json({ message: 'No face detected in the image' });
     }
 
-    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
+    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, {
+      width: image.width,
+      height: image.height,
+    });
 
     // Check if a similar face already exists in the database
-    const existingFaces = await Face.find(); // Assuming you have a Face model defined
+    const existingFaces = await FaceDescription.find();
 
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
-
-// ...
 
 for (const newFaceDescription of fullFaceDescriptions) {
   let isDuplicateFaceDescription = false; // Reset for each new face description
@@ -145,40 +149,53 @@ for (const newFaceDescription of fullFaceDescriptions) {
   }
 }
 z
-    // Save data to MongoDB, including faceDescriptions and distances
-    const facesData = fullFaceDescriptions.map((faceDescription) => {
-      const { x, y, width, height } = faceDescription.detection.box;
-      const faceBox = { x, y, width, height };
-      const faceDescriptor = faceDescription.descriptor;
-      const faceLandmarks = faceDescription.landmarks;
+   // Save data to MongoDB, including faceDescriptions, distances, and image data
+   const facesData = fullFaceDescriptions.map((faceDescription) => {
+    const { x, y, width, height } = faceDescription.detection.box;
+    const faceBox = { x, y, width, height };
+    const faceDescriptor = faceDescription.descriptor;
+    const faceLandmarks = faceDescription.landmarks;
 
-      // Calculate the distances between this face and all other faces
-      const distances = fullFaceDescriptions.map((otherFaceDescription) => {
-        const distance = euclideanDistance(faceDescriptor, otherFaceDescription.descriptor);
-        return distance;
-      });
-
-      return {
-        faceBox,
+    // Calculate the distances between this face and all other faces
+    const distances = fullFaceDescriptions.map((otherFaceDescription) => {
+      const distance = euclideanDistance(
         faceDescriptor,
-        faceLandmarks,
-        distances,
-      };
+        otherFaceDescription.descriptor
+      );
+      return distance;
     });
 
+    return {
+      faceBox,
+      faceDescriptor,
+      faceLandmarks,
+      distances,
+    };
+  });
 
+  // Save the image data to the Face model
+  const newFace = new FaceDescription({
+    eventId,
+    name,
+    school,
+    email,
+    faceDescription: facesData,
+    image: {
+      data: req.file.buffer,
+      contentType: req.file.mimetype,
+    },
+  });
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
-    await newFace.save();
+  await newFace.save();
 
-    // Remove the uploaded image
-    await fs.promises.unlink(req.file.path);
+  // Remove the uploaded image
+  await fs.promises.unlink(req.file.path);
 
-    res.status(201).json({ message: 'Face added successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+  res.status(201).json({ message: 'Face added successfully' });
+} catch (error) {
+  console.error(error);
+  res.status(500).json({ message: 'Internal Server Error' });
+}
 });
 
 
