@@ -87,22 +87,16 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     const context = canvas.getContext('2d');
     context.drawImage(image, 0, 0);
 
-    let fullFaceDescriptions = await faceapi
-      .detectAllFaces(canvas)
-      .withFaceLandmarks()
-      .withFaceDescriptors();
+    let fullFaceDescriptions = await faceapi.detectAllFaces(canvas).withFaceLandmarks().withFaceDescriptors();
 
     if (fullFaceDescriptions.length === 0) {
       return res.status(400).json({ message: 'No face detected in the image' });
     }
 
-    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, {
-      width: image.width,
-      height: image.height,
-    });
+    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, { width: image.width, height: image.height });
 
     // Check if a similar face already exists in the database
-    const existingFaces = await Face.find();
+    const existingFaces = await Face.find(); // Assuming you have a Face model defined
 
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
@@ -174,30 +168,18 @@ z
 
 
 
-      // Save the image data to the Face model
-      const newFace = new Face({
-        eventId,
-        name,
-        school,
-        email,
-        faceDescription: facesData,
-        image: {
-          data: fs.readFileSync(imagePath),
-          contentType: req.file.mimetype,
-        },
-      });
-  
-      await newFace.save();
-  
-      // Remove the uploaded image
-      await fs.promises.unlink(req.file.path);
-  
-      res.status(201).json({ message: 'Face added successfully' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-  });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
+    await newFace.save();
+
+    // Remove the uploaded image
+    await fs.promises.unlink(req.file.path);
+
+    res.status(201).json({ message: 'Face added successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 
 app.post('/compare-faces', upload.single('image'), async (req, res) => {
