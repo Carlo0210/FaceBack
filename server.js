@@ -80,6 +80,9 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
+    // Read the image data
+    const imageBuffer = await fs.readFile(req.file.path);
+
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
@@ -166,7 +169,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, imagePath: req.file.path });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: imageBuffer });
     await newFace.save();
 
     // Remove the uploaded image
