@@ -101,8 +101,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
 
-// ...
-
 for (const newFaceDescription of fullFaceDescriptions) {
   let isDuplicateFaceDescription = false; // Reset for each new face description
   let isDuplicateEmail = false; // Reset for each new face description
@@ -168,7 +166,7 @@ z
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, imagePath: req.file.path });
     await newFace.save();
 
     // Remove the uploaded image
