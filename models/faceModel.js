@@ -22,7 +22,7 @@ const faceSchema = new mongoose.Schema({
     validate: [isEmail, 'Invalid email'],
   },
   faceDescription: Object,
-  image: String,
+  image: Buffer,
 });
 
 const FaceDescription = mongoose.model("Face", faceSchema);
