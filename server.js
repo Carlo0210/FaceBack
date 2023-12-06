@@ -102,7 +102,7 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
     });
 
     // Check if a similar face already exists in the database
-    const existingFaces = await FaceDescription.find();
+    const existingFaces = await Face.find();
 
     let isDuplicateFaceDescription = false;
     let isDuplicateEmail = false;
@@ -174,7 +174,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
   });
 
   // Save the image data to the Face model
-  const newFace = new FaceDescription({
+  const newFace = new Face({
     eventId,
     name,
     school,
