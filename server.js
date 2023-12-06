@@ -60,6 +60,8 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
+// Set up multer for file uploads
+const upload = multer({storage: storage});
 
 
 // Function to calculate the Euclidean distance between two face descriptors
@@ -69,8 +71,6 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
     .reduce((sum, val) => sum + val, 0);
   return Math.sqrt(squaredDistance);
 }
-
-const upload = multer({ dest: 'uploads/' }); // Update the destination folder
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
@@ -173,30 +173,31 @@ z
     });
 
 
-    // Save the image data to the Face model
-    const newFace = new Face({
-      eventId,
-      name,
-      school,
-      email,
-      faceDescription: facesData,
-      image: {
-        data: fs.readFileSync(imagePath),
-        contentType: req.file.mimetype,
-      },
-    });
 
-    await newFace.save();
-
-    // Remove the uploaded image
-    await fs.promises.unlink(req.file.path);
-
-    res.status(201).json({ message: 'Face added successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
+      // Save the image data to the Face model
+      const newFace = new Face({
+        eventId,
+        name,
+        school,
+        email,
+        faceDescription: facesData,
+        image: {
+          data: fs.readFileSync(imagePath),
+          contentType: req.file.mimetype,
+        },
+      });
+  
+      await newFace.save();
+  
+      // Remove the uploaded image
+      await fs.promises.unlink(req.file.path);
+  
+      res.status(201).json({ message: 'Face added successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
 
 
 app.post('/compare-faces', upload.single('image'), async (req, res) => {
