@@ -148,7 +148,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
     return res.status(400).json({ message: 'This email is already exist. Try another different email address.' });
   }
 }
-z
+
    // Save data to MongoDB, including faceDescriptions, distances, and image data
    const facesData = fullFaceDescriptions.map((faceDescription) => {
     const { x, y, width, height } = faceDescription.detection.box;
