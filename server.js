@@ -84,9 +84,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Read the image data
-    const imageBuffer = await fs.readFile(req.file.path);
-
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
@@ -180,6 +177,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
     await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
+    res.json(newFace);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
