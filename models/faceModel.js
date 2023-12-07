@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { isEmail } = require('validator');
+
 const faceSchema = new mongoose.Schema({
   eventId: {
     type: String,
@@ -22,7 +23,9 @@ const faceSchema = new mongoose.Schema({
     validate: [isEmail, 'Invalid email'],
   },
   faceDescription: Object,
+  imagePath: String, // Add this field to store the image path or filename
 });
+
 
 const FaceDescription = mongoose.model("Face", faceSchema);
 
