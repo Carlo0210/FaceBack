@@ -169,7 +169,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: imageBuffer });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: imagePath });
     await newFace.save();
 
     // Remove the uploaded image
