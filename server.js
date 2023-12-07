@@ -54,7 +54,7 @@ loadModels();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "upload"); // You should create this folder to store uploaded images
+    cb(null, 'images/'); // You should create this folder to store uploaded images
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -75,6 +75,10 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
     const { eventId, name, school, email } = req.body;
+    const img = {
+      data: req.file.buffer,
+      contentType: req.file.mimetype,
+    };
 
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
@@ -169,10 +173,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img: {
-      data: fs.readFileSync("uploads/" + req.file.filename),
-      contentType: "image/png",
-    }, });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img, });
     await newFace.save();
 
     // Remove the uploaded image
@@ -260,15 +261,7 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
-// Endpoint to get all faces
-app.get('/faces', async (req, res) => {
-  try {
-    const faces = await Face.find();
-    res.json(faces);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+
 
 
 
