@@ -74,7 +74,7 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
-    const { eventId, name, school, email, img } = req.body;
+    const { eventId, name, school, email } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
@@ -169,7 +169,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData });
     await newFace.save();
 
     // Remove the uploaded image
@@ -257,19 +257,7 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
-// Endpoint to get all faces
-app.get('/faces', async (req, res) => {
-  try {
-    // Retrieve all face records from the database
-    const allFaces = await Face.find();
-    
-    // Send the faces as a JSON response
-    res.json(allFaces);
-  } catch (error) {
-    // Handle errors, e.g., send an error response
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+
 
 
 
