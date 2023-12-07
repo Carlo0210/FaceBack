@@ -54,7 +54,7 @@ loadModels();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'images/'); // You should create this folder to store uploaded images
+    cb(null, "upload"); // You should create this folder to store uploaded images
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -169,7 +169,10 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, image: imageBuffer });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img: {
+      data: fs.readFileSync("uploads/" + req.file.filename),
+      contentType: "image/png",
+    }, });
     await newFace.save();
 
     // Remove the uploaded image
