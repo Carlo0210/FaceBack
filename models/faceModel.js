@@ -23,9 +23,8 @@ const faceSchema = new mongoose.Schema({
   },
   faceDescription: Object,
   img: {
-    data: Buffer,
-    contentType: String,
-  }
+    type: String,
+  },
 });
 
 const FaceDescription = mongoose.model("Face", faceSchema);

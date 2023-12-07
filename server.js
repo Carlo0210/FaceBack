@@ -74,15 +74,14 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
-    const { eventId, name, school, email } = req.body;
-    const img = {
-      data: req.file.buffer,
-      contentType: req.file.mimetype,
-    };
+    const { eventId, name, school, email, img } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
     }
+
+    // Read the image data
+    const imageBuffer = await fs.readFile(req.file.path);
 
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
@@ -170,14 +169,13 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img, });
+    const newFace = new Face({ eventId, name, school, email, faceDescription: facesData, img });
     await newFace.save();
 
     // Remove the uploaded image
     await fs.promises.unlink(req.file.path);
 
     res.status(201).json({ message: 'Face added successfully' });
-    res.json(newFace);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -259,7 +257,19 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
-
+// Endpoint to get all faces
+app.get('/faces', async (req, res) => {
+  try {
+    // Retrieve all face records from the database
+    const allFaces = await Face.find();
+    
+    // Send the faces as a JSON response
+    res.json(allFaces);
+  } catch (error) {
+    // Handle errors, e.g., send an error response
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 
