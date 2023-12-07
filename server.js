@@ -257,7 +257,18 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
+// Define a new route to get all face data
+app.get('/get-all-faces', async (req, res) => {
+  try {
+    // Retrieve all faces from the database
+    const allFaces = await Face.find();
 
+    res.status(200).json(allFaces);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 
 
