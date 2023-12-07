@@ -23,7 +23,12 @@ const faceSchema = new mongoose.Schema({
     validate: [isEmail, 'Invalid email'],
   },
   faceDescription: Object,
-  imagePath: String, // Add this field to store the image path or filename
+  image: {
+    type: Buffer,
+  },
+  mimeType: {
+    type: String,
+  },
 });
 
 

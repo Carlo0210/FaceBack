@@ -80,11 +80,9 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Save the image to a directory
-    const imageFileName = `${Date.now()}_${req.file.originalname}`;
-    const imageFilePath = path.join(__dirname, 'uploads', imageFileName);
-    await fs.writeFile(imageFilePath, req.file.buffer);
-    
+    // Read the image data
+    const imageBuffer = await fs.readFile(req.file.path);
+
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
@@ -177,12 +175,15 @@ for (const newFaceDescription of fullFaceDescriptions) {
       school,
       email,
       faceDescription: facesData,
-      imagePath: imageFilePath, // Save the image path in the database
+      image: imageBuffer,
+      mimeType: req.file.mimetype,
     });
+
     await newFace.save();
 
     // Remove the uploaded image
-    await fs.unlink(req.file.path);
+    await fs.promises.unlink(req.file.path);
+
     res.status(201).json({ message: 'Face added successfully' });
   } catch (error) {
     console.error(error);
