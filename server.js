@@ -266,7 +266,16 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
-
+// Endpoint to get all faces
+app.get('/faces', async (req, res) => {
+  try {
+    const faces = await Face.find();
+    res.json(faces);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 
 
