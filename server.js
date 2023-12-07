@@ -257,13 +257,31 @@ app.post('/compare-faces', upload.single('image'), async (req, res) => {
 });
 
 
-// Define a new route to get all face data
 app.get('/get-all-faces', async (req, res) => {
   try {
     // Retrieve all faces from the database
     const allFaces = await Face.find();
 
-    res.status(200).json(allFaces);
+    // Iterate through each face and save it as an image file
+    allFaces.forEach(async (face, index) => {
+      const imageBuffer = face.image; // Replace 'image' with the actual field name in your database
+
+      // Generate a unique filename for each face
+      const fileName = `face_${index + 1}.png`; // You can use a different extension based on your image format
+
+      // Specify the path where the image file will be saved
+      const filePath = path.join(__dirname, 'images', fileName);
+
+      // Write the image buffer to the file
+      fs.writeFileSync(filePath, imageBuffer);
+
+      // Update the face object in the database to store the file path or do any other necessary updates
+      // For example, you can add a new field to the Face model to store the file path
+      // face.filePath = filePath;
+      // await face.save();
+    });
+
+    res.status(200).json({ message: 'Faces saved as image files.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
