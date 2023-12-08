@@ -80,8 +80,8 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Save the image path from the frontend
-    const imagePaths = req.file.path;
+    // Read the image data
+    const imageBuffer = await fs.readFile(req.file.path);
 
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
@@ -175,7 +175,6 @@ for (const newFaceDescription of fullFaceDescriptions) {
       school,
       email,
       faceDescription: facesData,
-      picture: imagePaths,
     });
 
     await newFace.save();

@@ -23,9 +23,6 @@ const faceSchema = new mongoose.Schema({
     validate: [isEmail, 'Invalid email'],
   },
   faceDescription: Object,
-  picture: {
-    type: String,
-  },
 });
 
 
