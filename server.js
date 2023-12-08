@@ -74,7 +74,7 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
   try {
-    const { eventId, name, school, email } = req.body;
+    const { eventId, name, school, email, picture } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'No image uploaded' });
@@ -175,7 +175,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
       school,
       email,
       faceDescription: facesData,
-      image: imageBuffer,
+      picture,
       mimeType: req.file.mimetype,
     });
 
