@@ -26,9 +26,6 @@ const faceSchema = new mongoose.Schema({
   picture: {
     type: String,
   },
-  mimeType: {
-    type: String,
-  },
 });
 
 
