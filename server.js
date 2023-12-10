@@ -73,6 +73,9 @@ function euclideanDistance(faceDescriptor1, faceDescriptor2) {
 }
 
 app.post('/post-face', upload.single('image'), async (req, res) => {
+
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
   try {
     const { eventId, name, school, email } = req.body;
 
