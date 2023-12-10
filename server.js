@@ -83,12 +83,6 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    // Ensure the 'newFace' variable is declared before using it
-    let newFace;
-    // Save the image data to MongoDB
-    const imageBuffer = await fs.readFile(req.file.path);
-    newFace.picture = imageBuffer;
-
     // Load the image from the file path
     const imagePath = path.join(__dirname, req.file.path);
     const image = await loadImage(imagePath);
@@ -175,14 +169,18 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-      newFace = new Face({
+    // Save data to MongoDB, including faceDescriptions, distances, and picture
+    const newFace = new Face({
       eventId,
       name,
       school,
       email,
       faceDescription: facesData,
-      picture: imageBuffer,
     });
+
+        // Save the image data to MongoDB
+        const imageBuffer = await fs.readFile(req.file.path);
+        newFace.picture = imageBuffer;
 
     await newFace.save();
 
