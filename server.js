@@ -175,8 +175,7 @@ for (const newFaceDescription of fullFaceDescriptions) {
 
 
 
-    // Save data to MongoDB, including faceDescriptions, distances, and picture
-    const newFace = new Face({
+      newFace = new Face({
       eventId,
       name,
       school,
