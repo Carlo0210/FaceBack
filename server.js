@@ -83,7 +83,8 @@ app.post('/post-face', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-
+    // Ensure the 'newFace' variable is declared before using it
+    let newFace;
     // Save the image data to MongoDB
     const imageBuffer = await fs.readFile(req.file.path);
     newFace.picture = imageBuffer;
