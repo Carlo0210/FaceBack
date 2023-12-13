@@ -450,6 +450,25 @@ app.put('/events/:id', async (req, res) => {
   }
 });
 
+// Delete endpoint
+app.delete('/events/:id', async (req, res) => {
+  const eventId = req.params.id;
+  console.log('Received DELETE request for event ID:', eventId);
+
+  try {
+    const deletedEvent = await Event.findByIdAndDelete(eventId);
+
+    if (!deletedEvent) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
+
+    return res.status(200).json({ message: 'Event deleted successfully.', event: deletedEvent });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Failed to delete event.' });
+  }
+});
+
 
 app.post('/register/attendee', async (req, res) => {
   const { eventId, name, school, idNumber, email } = req.body;
